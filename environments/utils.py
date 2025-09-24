@@ -1,27 +1,27 @@
 import os
 
 
-def write_world(path, subdirectories, lammps_input, name='in.world'):
+def write_world(path, subdirectories, lammps_input, name="in.world"):
     """
     Write the LAMMPS input file for a world simulation.
 
     Args:
         path (str): The path to the directory where the input file will be written.
         subdirectories (list): A list of subdirectories to be included in the LAMMPS simulation.
-        lammps_input (str): Name of the lammps input file to use. 
+        lammps_input (str): Name of the lammps input file to use.
 
     Returns:
         None
     """
 
-    with open(os.path.join(path,name), 'w') as p:
-        p.write(f'''variable d world {' '.join(subdirectories)}
+    with open(os.path.join(path, name), "w") as p:
+        p.write(f"""variable d world {" ".join(subdirectories)}
 shell cd $d
 log log.lammps
-include {str(lammps_input)}''')
+include {str(lammps_input)}""")
 
 
-def write_universe(path, subdirectories, lammps_input, name='in.universe'):
+def write_universe(path, subdirectories, lammps_input, name="in.universe"):
     """
     Write the universe file for LAMMPS simulation.
 
@@ -31,21 +31,22 @@ def write_universe(path, subdirectories, lammps_input, name='in.universe'):
         lammps_input (str): Name of the lammps input file to use.
     """
 
-    with open(os.path.join(path,name), 'w') as p:
-        p.write(f'''variable d universe {' '.join(reversed(subdirectories))}
+    with open(os.path.join(path, name), "w") as p:
+        p.write(f"""variable d universe {" ".join(reversed(subdirectories))}
 shell cd $d
 log log.lammps
 include {str(lammps_input)}
 clear
 shell cd {str(path)}
 next d
-jump {name}''')
+jump {name}""")
 
 
 class LammpsData:
-    '''Class to read and write LAMMPS data files.'''
+    """Class to read and write LAMMPS data files."""
+
     def __init__(self, filename):
-        '''Input is path to the LAMMPS data file.'''
+        """Input is path to the LAMMPS data file."""
         self.filename = filename
         self.read()
 
@@ -72,7 +73,7 @@ class LammpsData:
         if filename is None:
             filename = self.filename
 
-        with open(filename, 'r') as file:
+        with open(filename, "r") as file:
             lines = file.readlines()
 
         # 1. Parse basic info
@@ -94,6 +95,7 @@ class LammpsData:
                 return lines.index(name + "\n")
             except ValueError:
                 return None  # Section not found
+
         def find_section(name):
             for i, line in enumerate(lines):
                 if line.startswith(name):
@@ -157,20 +159,22 @@ class LammpsData:
                 if not line.strip():
                     break
                 atom_data = list(map(float, line.split()))
-                self.atoms.append({
-                    'id': int(atom_data[0]),
-                    'type': int(atom_data[1]),
-                    'mol': int(atom_data[2]),
-                    'charge': atom_data[3],
-                    'x': atom_data[4],
-                    'y': atom_data[5],
-                    'z': atom_data[6],
-                    # vx, vy, vz stored as ints in original code, but usually they are floats
-                    # We'll keep them as ints for consistency with the original code
-                    'vx': int(atom_data[7]),
-                    'vy': int(atom_data[8]),
-                    'vz': int(atom_data[9]),
-                })
+                self.atoms.append(
+                    {
+                        "id": int(atom_data[0]),
+                        "type": int(atom_data[1]),
+                        "mol": int(atom_data[2]),
+                        "charge": atom_data[3],
+                        "x": atom_data[4],
+                        "y": atom_data[5],
+                        "z": atom_data[6],
+                        # vx, vy, vz stored as ints in original code, but usually they are floats
+                        # We'll keep them as ints for consistency with the original code
+                        "vx": int(atom_data[7]),
+                        "vy": int(atom_data[8]),
+                        "vz": int(atom_data[9]),
+                    }
+                )
 
         # 6. Parse Velocities (if present)
         if idx_velocities is not None:
@@ -195,17 +199,19 @@ class LammpsData:
                 if not line.strip():
                     break
                 bond_data = list(map(int, line.split()))
-                self.bonds.append({
-                    'id': bond_data[0],
-                    'type': bond_data[1],
-                    'atom1': bond_data[2],
-                    'atom2': bond_data[3],
-                })
+                self.bonds.append(
+                    {
+                        "id": bond_data[0],
+                        "type": bond_data[1],
+                        "atom1": bond_data[2],
+                        "atom2": bond_data[3],
+                    }
+                )
 
     def modify_atom(self, atom_id, **kwargs):
         """Modify any attribute of a specific atom."""
         for atom in self.atoms:
-            if atom['id'] == atom_id:
+            if atom["id"] == atom_id:
                 for key, value in kwargs.items():
                     if key in atom:
                         atom[key] = value
@@ -218,8 +224,8 @@ class LammpsData:
         """Writes the data back to a LAMMPS data file, preserving optional PairIJ Coeffs & Velocities if present."""
         if filename is None:
             filename = self.filename
-        
-        with open(filename, 'w') as file:
+
+        with open(filename, "w") as file:
             # 1. Header
             file.write(self.header + "\n\n")
 
@@ -228,12 +234,12 @@ class LammpsData:
             file.write(f"{self.atom_types} atom types\n")
             file.write(f"{self.num_bonds} bonds\n")
             file.write(f"{self.bond_types} bond types\n\n")
-            
+
             # 3. Box bounds
             file.write(f"{self.xlo:<18.15e}   {self.xhi:>18.15e} xlo xhi\n")
             file.write(f"{self.ylo:<18.15e}   {self.yhi:>18.15e} ylo yhi\n")
             file.write(f"{self.zlo:<18.15e}   {self.zhi:>18.15e} zlo zhi\n\n")
-            
+
             # 4. Masses
             file.write("Masses\n\n")
             for atom_type, mass in self.masses.items():
@@ -250,9 +256,11 @@ class LammpsData:
             # 6. Atoms
             file.write("\nAtoms\n\n")
             for atom in self.atoms:
-                file.write(f"{atom['id']:<5} {atom['type']:>5} {atom['mol']:>4} "
-                           f"{atom['charge']:>8.5f} {atom['x']:>15.10f} {atom['y']:>15.10f} "
-                           f"{atom['z']:>15.10f} {atom['vx']} {atom['vy']} {atom['vz']}\n")
+                file.write(
+                    f"{atom['id']:<5} {atom['type']:>5} {atom['mol']:>4} "
+                    f"{atom['charge']:>8.5f} {atom['x']:>15.10f} {atom['y']:>15.10f} "
+                    f"{atom['z']:>15.10f} {atom['vx']} {atom['vy']} {atom['vz']}\n"
+                )
 
             # 7. Velocities (if any)
             if self.velocities:
@@ -263,14 +271,16 @@ class LammpsData:
             # 8. Bonds
             file.write("\nBonds\n\n")
             for bond in self.bonds:
-                file.write(f"{bond['id']:<2} {bond['type']} {bond['atom1']} {bond['atom2']}\n")
-
+                file.write(
+                    f"{bond['id']:<2} {bond['type']} {bond['atom1']} {bond['atom2']}\n"
+                )
 
 
 class LammpsSettings:
-    '''Class to read and write LAMMPS settings files.'''
+    """Class to read and write LAMMPS settings files."""
+
     def __init__(self, filename):
-        '''Input is path to the LAMMPS settings file.'''
+        """Input is path to the LAMMPS settings file."""
         self.filename = filename
         self.non_bonded = {}
         self.bonds = {}
@@ -279,30 +289,28 @@ class LammpsSettings:
 
         self.read()
 
-
     def read(self, filename=None):
         """Reads the LAMMPS settings file."""
         if filename is None:
             filename = self.filename
 
-        with open(filename, 'r') as file:
+        with open(filename, "r") as file:
             lines = file.readlines()
         self.header = lines[0].strip()
-            
+
         for line in lines:
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
 
-            if line.startswith('pair_coeff'):
+            if line.startswith("pair_coeff"):
                 self._parse_non_bonded(line)
-            elif line.startswith('bond_coeff'):
+            elif line.startswith("bond_coeff"):
                 self._parse_bonds(line)
-            elif line.startswith('angle_coeff'):
+            elif line.startswith("angle_coeff"):
                 self._parse_angles(line)
-            elif line.startswith('dihedral_coeff'):
+            elif line.startswith("dihedral_coeff"):
                 self._parse_dihedrals(line)
-
 
     def _parse_non_bonded(self, line):
         """Parses non-bonded coefficients from a line."""
@@ -311,81 +319,84 @@ class LammpsSettings:
         # print(self.non_bonded)
         if (int(parts[1]), int(parts[2])) not in self.non_bonded:
             self.non_bonded[(int(parts[1]), int(parts[2]))] = {
-                'style': parts[3],
-                'params': list(map(float, parts[4:])),
+                "style": parts[3],
+                "params": list(map(float, parts[4:])),
             }
 
-    
     def _parse_bonds(self, line):
         """Parses bond coefficients from a line."""
         parts = line.split()
         if parts[1] not in self.bonds:
             self.bonds[parts[1]] = {
-                'style': parts[2],
-                'params': list(map(float, parts[3:])),
+                "style": parts[2],
+                "params": list(map(float, parts[3:])),
             }
 
-            
     def _parse_angles(self, line):
         """Parses angle coefficients from a line."""
         parts = line.split()
         if parts[1] not in self.angles:
             self.angles[parts[1]] = {
-                'style': parts[2],
-                'params': list(map(float, parts[3:])),
+                "style": parts[2],
+                "params": list(map(float, parts[3:])),
             }
-            
-            
+
     def _parse_dihedrals(self, line):
         """Parses dihedral coefficients from a line."""
         parts = line.split()
         if parts[1] not in self.dihedrals:
             self.dihedrals[parts[1]] = {
-                'params': list(map(float, parts[2:])),
+                "params": list(map(float, parts[2:])),
             }
-
 
     def write(self, filename=None):
         """Writes the settings back to a LAMMPS settings file."""
         if filename is None:
             filename = self.filename
 
-        with open(filename, 'w') as file:
+        with open(filename, "w") as file:
             file.write(self.header + "\n\n")
 
             # Write non-bonded coefficients first
-            file.write('# ~~~~~Non-bonded~~~~~\n# e.g., pair_coeff type eps sig\n')
+            file.write("# ~~~~~Non-bonded~~~~~\n# e.g., pair_coeff type eps sig\n")
             for (type1, type2), data in self.non_bonded.items():
-                params_str = " ".join(f"{p:10.5f}" for p in data['params'])
-                file.write(f"pair_coeff {type1:<5} {type2:<5} {data['style']:<15} {params_str}\n")
+                params_str = " ".join(f"{p:10.5f}" for p in data["params"])
+                file.write(
+                    f"pair_coeff {type1:<5} {type2:<5} {data['style']:<15} {params_str}\n"
+                )
 
-            
             # Write bond coefficients
-            file.write('\n# ~~~~~Bonds~~~~~\n# e.g., bond_coeff type k  r0\n')
+            file.write("\n# ~~~~~Bonds~~~~~\n# e.g., bond_coeff type k  r0\n")
             for bond_type, data in self.bonds.items():
-                params_str = " ".join(f"{p:10.5f}" for p in data['params'])
-                file.write(f"bond_coeff {bond_type:<5} {data['style']:<15} {params_str}\n")
+                params_str = " ".join(f"{p:10.5f}" for p in data["params"])
+                file.write(
+                    f"bond_coeff {bond_type:<5} {data['style']:<15} {params_str}\n"
+                )
 
             # Write angle coefficients
-            file.write('\n# ~~~~~Angles~~~~~\n# e.g., angle_coeff type k(kcal/mol/rad**2)  theta_0 (degrees)\n')
+            file.write(
+                "\n# ~~~~~Angles~~~~~\n# e.g., angle_coeff type k(kcal/mol/rad**2)  theta_0 (degrees)\n"
+            )
             for angle_type, data in self.angles.items():
-                params_str = " ".join(f"{p:10.5f}" for p in data['params'])
-                file.write(f"angle_coeff {angle_type:<5} {data['style']:<15} {params_str}\n")
-                
-                
+                params_str = " ".join(f"{p:10.5f}" for p in data["params"])
+                file.write(
+                    f"angle_coeff {angle_type:<5} {data['style']:<15} {params_str}\n"
+                )
+
             # Write dihedral coefficients
-            file.write('\n# ~~~~~Dihedrals~~~~~\n# e.g., dihedral_coeff type k(kcal/mol) n d weighting_factor\n')
+            file.write(
+                "\n# ~~~~~Dihedrals~~~~~\n# e.g., dihedral_coeff type k(kcal/mol) n d weighting_factor\n"
+            )
             for dihedral_type, data in self.dihedrals.items():
-                params_str = " ".join(f"{p:10.5f}" for p in data['params'][:-2])
+                params_str = " ".join(f"{p:10.5f}" for p in data["params"][:-2])
                 # For harmonic style dihedral, the last two parameters must be integers
                 # If we want to use a different dihedral style, we'll need to change this
-                params_str += " ".join(f"{int(p):5d}" for p in data['params'][-2:]) 
+                params_str += " ".join(f"{int(p):5d}" for p in data["params"][-2:])
                 file.write(f"dihedral_coeff {dihedral_type:<5} {params_str}\n")
 
-                
     def modify_non_bonded(self, type1, type2, style, params):
         """Modify non-bonded coefficients."""
         self.non_bonded[(type1, type2)] = {
-            'style': style,
-            'params': params,
+            "style": style,
+            "params": params,
         }
