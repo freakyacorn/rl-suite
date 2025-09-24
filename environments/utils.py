@@ -109,7 +109,7 @@ class LammpsData:
         idx_bonds = find_section("Bonds")
 
         # 3. Parse Masses
-        # In this template, "Masses" is followed by a blank line, so the actual lines start 2 after index
+        # "Masses" should be followed by a blank line, so the actual lines start 2 after index
         # The next section might be "PairIJ Coeffs" or "Atoms"
         if idx_masses is not None:
             start_mass = idx_masses + 2
@@ -134,7 +134,7 @@ class LammpsData:
             end_pairij = idx_atoms - 1 if idx_atoms is not None else start_pairij
 
             # Example line for PairIJ Coeffs might look like: "1 1 0.2 2.5"
-            # We'll parse the first 2 as types, the rest as parameters
+            # Parse the first 2 as atom types, the rest as parameters
             for line in lines[start_pairij:end_pairij]:
                 if not line.strip():
                     break
